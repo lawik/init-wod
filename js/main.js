@@ -2,6 +2,9 @@ $(document).ready(function() {
 
   renderCharacters();
 
+});
+
+function bindEvents() {
   $('.character-new .save').on('click', function(e) {
     e.preventDefault();
     var container = $(this).closest('.character-new');
@@ -19,6 +22,7 @@ $(document).ready(function() {
   });
 
   $('.character button[data-action="save"]').on('click', function(e) {
+    console.log("updating character");
     e.preventDefault();
     var container = $(this).closest('.character');
     var character = {
@@ -41,7 +45,7 @@ $(document).ready(function() {
     e.preventDefault();
     rollInitiative();
   });
-});
+}
 
 function rollInitiative() {
   var characters = loadCharacters();
@@ -99,6 +103,8 @@ function renderCharacters() {
     '<td><input type="text" class="modifier" name="modifier"></td>' +
     '<td><button class="btn save"><i class="icon-plus"></i></button></td>' +
   '</tr>');
+
+  bindEvents();
 }
 
 function characterTemplate(name, dexterity, wits, modifier) {
