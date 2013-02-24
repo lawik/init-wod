@@ -9,11 +9,10 @@ function bindEvents() {
     e.preventDefault();
     var container = $(this).closest('.character-new');
     var name = container.find('.name').val();
-    var dexterity = container.find('.dexterity').val();
-    var wits = container.find('.wits').val();
-    var modifier = container.find('.modifier').val();
+    var initiative = container.find('.initiative').val();
+    var bonus = container.find('.bonus').val();
 
-    if(newCharacter(name, dexterity, wits, modifier)) {
+    if(newCharacter(name, initiative, bonus)) {
       renderCharacters();
       container.find('input').attr('value','');
     } else {
@@ -27,9 +26,8 @@ function bindEvents() {
     var container = $(this).closest('.character');
     var character = {
       name: container.find('.name').text(),
-      dexterity: container.find('.dexterity').val(),
-      wits: container.find('.wits').val(),
-      modifier: container.find('.modifier').val()
+      initiative: container.find('.initiative').val(),
+      bonus: container.find('.bonus').val()
     };
     setCharacter(character.name,character);
     renderCharacters();
@@ -53,7 +51,7 @@ function rollInitiative() {
   var charlist = [];
   for(var i in characters) {
     console.log(characters[i].name);
-    var init = parseInt(characters[i].dexterity) + parseInt(characters[i].wits) + parseInt(characters[i].modifier) + d10();
+    var init = parseInt(characters[i].initiative) + parseInt(characters[i].bonus) + d10();
 
     console.log(init);
     var charac = characters[i];
@@ -65,7 +63,7 @@ function rollInitiative() {
   console.log(charlist);
 
   for(var i in charlist) {
-    $("#init tbody").append('<tr><td>'+charlist[i].name+'</td><td>'+charlist[i].init+'</td></tr>');
+    $("#init tbody").append('<tr><td>'+charlist[i].name+'</td><td>'+charlist[i].init+'</td><td><input type="text" /></tr>');
   }
 }
 
@@ -74,6 +72,36 @@ function compare(a,b) {
     return 1;
   if (a.init > b.init)
     return -1;
+  // Manage draws
+  if (a.init == b.init) {
+    console.log("Encountered a draw, resolving: ");
+    if ( parseInt(a.initiative) + parseInt(a.bonus) < parseInt(b.initiative) + parseInt(b.bonus) ) {
+      console.log(a.name + " had a bigger initiative base than " + b.name);
+      return 1;
+    }
+    if ( parseInt(a.initiative) + parseInt(a.bonus) > parseInt(b.initiative) + parseInt(b.bonus) ) {
+      console.log(b.name + " had a bigger initiative base than " + a.name);
+      return -1;
+    }
+    // Manage double-draw
+    console.log("Base initiative values were draw. Rolling chance-dice.");
+    draw = true;
+    while(draw) {
+      a_die = d10();
+      b_die = d10();
+      console.log(a_die + ' vs. ' + b_die);
+      if ( a_die < b_die ) {
+        a.draw = a_die;
+        b.draw = b_die;
+        return 1;
+      }
+      if ( a_die > b_die ) {
+        a.draw = a_die;
+        b.draw = b_die;
+        return -1;
+      }
+    }
+  }
   return 0;
 }
 
@@ -92,43 +120,40 @@ function renderCharacters() {
   charEl.html('');
 
   for(var i in characters) {
-    var html = characterTemplate(characters[i].name, characters[i].dexterity, characters[i].wits, characters[i].modifier);
+    var html = characterTemplate(characters[i].name, characters[i].initiative, characters[i].bonus);
     charEl.append(html);
   }
 
   charEl.append('<tr class="character-new">' +
     '<td><input type="text" class="name" name="name"></td>' +
-    '<td><input type="text" class="dexterity" name="dexterity"></td>' +
-    '<td><input type="text" class="wits" name="wits"></td>' +
-    '<td><input type="text" class="modifier" name="modifier"></td>' +
+    '<td><input type="text" class="initiative" name="initiative"></td>' +
+    '<td><input type="text" class="bonus" name="bonus"></td>' +
     '<td><button class="btn save"><i class="icon-plus"></i></button></td>' +
   '</tr>');
 
   bindEvents();
 }
 
-function characterTemplate(name, dexterity, wits, modifier) {
+function characterTemplate(name, initiative, bonus) {
   var html = '<tr class="character" id="'+name+'">' +
     '<td><strong class="name">'+name+'</strong></td>' +
-    '<td><input type="text" class="dexterity" name="dexterity" value="'+dexterity+'"></td>' +
-    '<td><input type="text" class="wits" name="wits" value="'+wits+'"></td>' +
-    '<td><input type="text" class="modifier" name="modifier" value="'+modifier+'"></td>' +
+    '<td><input type="text" class="initiative" name="initiative" value="'+initiative+'"></td>' +
+    '<td><input type="text" class="bonus" name="bonus" value="'+bonus+'"></td>' +
     '<td><button class="btn" data-action="save"><i class="icon-pencil"></i></button> <button class="btn" data-action="delete"><i class="icon-remove"></i></button></td>' +
   '</tr>';
 
   return html;
 }
 
-function newCharacter(name, dexterity, wits, modifier) {
+function newCharacter(name, initiative, bonus) {
   if(typeof modifier == 'undefined') {
     modifier = 0;
   }
 
   var character = {
     name: name,
-    dexterity: dexterity,
-    wits: wits,
-    modifier: modifier
+    initiative: initiative,
+    bonus: bonus
   }
 
   var characters = loadCharacters();
